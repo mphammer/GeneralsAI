@@ -10,6 +10,9 @@ EMPTY = -1
 MOUNTAIN = -2
 FOG = -3
 OBSTACLE = -4
+BOT = 1
+ENEMY = 0
+
 
 _ENDPOINTS = {
     'na': "ws://ws.generals.io/socket.io/?EIO=3&transport=websocket",
