@@ -78,15 +78,15 @@ class Bot:
 
 				if i-1 >= 0:                                                 # check up
 					if update['tile_grid'][i-1][j] in [generals.FOG,1,-1]:
-						currTile.down = self.mapGrid[i-1][j]
+						currTile.up = self.mapGrid[i-1][j]
 
 				if j+1 < self.nCols:                                         # check right
 					if update['tile_grid'][i][j+1] in [generals.FOG,1,-1]:
-						currTile.down = self.mapGrid[i][j+1]
+						currTile.right = self.mapGrid[i][j+1]
 
 				if j-1 >= 0:                                                 # check left
 					if update['tile_grid'][i][j-1] in [generals.FOG,1,-1]:
-						currTile.down = self.mapGrid[i][j-1]
+						currTile.left = self.mapGrid[i][j-1]
 
 
 	def updateMap(self,update):
