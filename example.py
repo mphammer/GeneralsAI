@@ -152,7 +152,7 @@ class Bot:
 				elif tile.state == generals.OBSTACLE:
 					rowStr += "[ M ]"
 				elif tile.state == generals.ENEMY:
-					rowStr += "[ "+str(tile.arm)+" ]"
+					rowStr += "[ "+str(tile.army)+" ]"
 				elif tile.state == generals.BOT:
 					rowStr += "[ "+str(tile.army)+" ]"
 				elif tile.state == generals.EMPTY:
