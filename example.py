@@ -88,7 +88,27 @@ class Bot:
 
 
 	def updateMap(self,update):
-		pass
+		for i in range(self.nRows):
+			for j in range(self.nCols):
+				botTile = self.mapGrid[i][j]
+				tile =  update['tile_grid'][i][j]
+				troops = update['army_grid'][i][j]
+				if tile == generals.MOUNTAIN:
+					botTile.state = generals.MOUNTAIN
+				elif tile == generals.FOG:
+					botTile.state = generals.FOG
+				elif tile == generals.OBSTACLE:
+					botTile.state = generals.OBSTACLE
+				elif tile == generals.ENEMY:
+					botTile.state = generals.ENEMY
+					botTile.army = troops
+				elif tile == generals.BOT:
+					botTile.state = generals.BOT
+					botTile.army = troops * -1
+				elif tile == generals.EMPTY:
+					botTile.state = generals.EMPTY
+				else:
+					print("unknown state")
 
 
 
@@ -113,31 +133,30 @@ class Bot:
 	def createMap(self, update):
 		'''Craetes the initial Map - a 2D array with a 
 		Tile object in each index'''
-		#print("creating map!")
 		self.nCols = update['cols']
 		self.nRows = update['rows']
 		self.mapGrid = [ [Tile() for i in range(self.nCols)] for j in range(self.nRows) ]
 
 
 
-	def printMap(self, update):
+	def printMap(self):
 		print("")
-		for i in range(len(update['tile_grid'])):
+		for i in range(self.nRows):
 			rowStr = ""
-			for j in range(len(update['tile_grid'][i])):
-				tile =  update['tile_grid'][i][j]
-				if tile == generals.MOUNTAIN:
+			for j in range(self.nCols):
+				tile =  self.mapGrid[i][j]
+				if tile.state == generals.MOUNTAIN:
 					rowStr += "[ M ]"
-				elif tile == generals.FOG:
+				elif tile.state == generals.FOG:
+					rowStr += "[|||]"
+				elif tile.state == generals.OBSTACLE:
+					rowStr += "[ M ]"
+				elif tile.state == generals.ENEMY:
+					rowStr += "[ "+str(tile.arm)+" ]"
+				elif tile.state == generals.BOT:
+					rowStr += "[ "+str(tile.army)+" ]"
+				elif tile.state == generals.EMPTY:
 					rowStr += "[   ]"
-				elif tile == generals.OBSTACLE:
-					rowStr += "[ M ]"
-				elif tile == 0:
-					rowStr += "[ O ]"
-				elif tile == 1:
-					rowStr += "[ X ]"
-				elif tile == -1:
-					rowStr += "[ s ]"
 				else:
 					rowStr += "[ "+str(tile)+" ]"
 			print(rowStr)
@@ -152,10 +171,11 @@ madeMap = False
 
 
 for update in g.get_updates():
-	frank.printMap(update)
 	if madeMap == False:
 		frank.initializeMap(update)
 		madeMap = True
+	frank.updateMap(update)
+	frank.printMap()
 	# get position of your general
 	pi = update['player_index']
 	y, x = update['generals'][pi]
