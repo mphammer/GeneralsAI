@@ -18,6 +18,11 @@ import heapq
 # 2v2 game
 # g = generals.Generals('your userid', 'your username', 'team')
 
+RIGHT = (0, 1)
+LEFT = (0, -1)
+UP = (-1, 0)
+DOWN = (1, 0)
+
 
 class Tile:
 	def __init__(self):
@@ -105,12 +110,12 @@ class Bot:
 					botTile.state = generals.ENEMY
 					botTile.army = troops
 					if self.color == "blue":
-        					botTile.army *= -1
+						botTile.army *= -1
 				elif tile == generals.BOT:
-                                        botTile.state = generals.BOT
+					botTile.state = generals.BOT
 					botTile.army = troops
 					if self.color == "red":
-                                                botTile.army *= -1
+						botTile.army *= -1
 				elif tile == generals.EMPTY:
 					botTile.state = generals.EMPTY
 				else:
@@ -179,6 +184,8 @@ madeMap = False
 stackX = 0
 stackY = 0
 
+curDir = None
+
 for update in frank.game.get_updates():
 	frank.printMap()
 	if madeMap == False:
@@ -187,22 +194,22 @@ for update in frank.game.get_updates():
 		crownY, crownX = update['generals'][pi]
 		
 		if frank.mapGrid[crownY][crownX].army > 0:
-                        frank.color = "red"
-                else:
-                        frank.color = "blue"
+			frank.color = "red"
+		else:
+			frank.color = "blue"
 		
 		stackX = crownX
 		stackY = crownY
 		madeMap = True
 		
-        frank.updateMap(update)
+	frank.updateMap(update)
 	if frank.mapGrid[stackY][stackX].army > -1:
 		stackX = crownX
 		stackY = crownY
 
 #	print("Stack: [" + str(stackX) + "," + str(stackY) + "]")
 
-        moved = False
+	moved = False
 
 	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
 		if frank.mapGrid[stackY+dy][stackX + dx].army  >= 1:
@@ -212,10 +219,44 @@ for update in frank.game.get_updates():
 			moved = True
 			break
 
-	if moved == False:	
-        	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:		
-                	if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
-                        	frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-                                stackX += dx
-                                stackY += dy
-                                break                        
+	if moved == False:
+		if curDir != None:
+                        print(curDir)
+			dy, dx = curDir
+			if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+				frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+				stackX += dx
+				stackY += dy
+				
+			else:
+                                if curDir == UP or curDir == DOWN:
+                                        dy, dx = LEFT
+                                        if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                                                print("HEADING LEFT")
+                                                curDir = LEFT
+                                        else:
+                                                print("HEADING RIGHT")
+                                                curDir = RIGHT
+                                else:
+                                        dy, dx = UP
+                                        if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                                                print("HEADING UP")
+                                                curDir = UP
+                                        else:
+                                                print("HEADING DOWN")
+                                                curDir = DOWN
+                                dy, dx = curDir
+                                frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+				stackX += dx
+				stackY += dy
+				
+				
+		else:
+                        print("flipping")
+			for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:		
+				if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+					frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+					stackX += dx
+					stackY += dy
+					curDir = (dy, dx)
+					break                        
