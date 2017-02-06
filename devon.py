@@ -42,6 +42,7 @@ class Bot:
 		self.nCols = 0         # number of columns in the map
 		self.nRows = 0         # number of rows in the map
 		self.game = None
+		self.color = ""
 
 	def startGame(self,game="private"):
 		if game == "1v1":
@@ -66,7 +67,7 @@ class Bot:
 
 		for i in range(self.nRows):
 			for j in range(self.nCols):
-				print("updated tile: "+str(i)+" "+str(j))
+				#print("updated tile: "+str(i)+" "+str(j))
 
 				currTile = self.mapGrid[i][j]
 				currTile.coords = [i,j]
@@ -103,9 +104,13 @@ class Bot:
 				elif tile == generals.ENEMY:
 					botTile.state = generals.ENEMY
 					botTile.army = troops
+					if self.color == "blue":
+        					botTile.army *= -1
 				elif tile == generals.BOT:
-					botTile.state = generals.BOT
-					botTile.army = troops * -1
+                                        botTile.state = generals.BOT
+					botTile.army = troops
+					if self.color == "red":
+                                                botTile.army *= -1
 				elif tile == generals.EMPTY:
 					botTile.state = generals.EMPTY
 				else:
@@ -178,46 +183,39 @@ for update in frank.game.get_updates():
 	frank.printMap()
 	if madeMap == False:
 		frank.initializeMap(update)
-		madeMap = True
 		pi = update['player_index']
 		crownY, crownX = update['generals'][pi]
+		
+		if frank.mapGrid[crownY][crownX].army > 0:
+                        frank.color = "red"
+                else:
+                        frank.color = "blue"
+		
 		stackX = crownX
 		stackY = crownY
-		print("Crown is at [x,y]: [" + str(crownX) + "," + str(crownY) + "]")
-	frank.updateMap(update)
-	if frank.mapGrid[stackY][stackX].army < 1:
+		madeMap = True
+		
+        frank.updateMap(update)
+	if frank.mapGrid[stackY][stackX].army > -1:
 		stackX = crownX
 		stackY = crownY
 
-	print("Stack: [" + str(stackX) + "," + str(stackY) + "]")
+#	print("Stack: [" + str(stackX) + "," + str(stackY) + "]")
 
-#	up = update['tile_grid'][stackY - 1][stackX]
-#	down = update['tile_grid'][stackY + 1][stackX]
-#	left = update['tile_grid'][stackY][stackX - 1]
-#	right = update['tile_grid'][stackY][stackX + 1]
-#	print("Crown: " + str(update['tile_grid'][crownY][crownX]))
-#	print("Up: " + str(update['tile_grid'][crownY - 1][crownX]))
-#	print("Down: " + str(update['tile_grid'][crownY + 1][crownX]))
-#	print("Left: " + str(update['tile_grid'][crownY][crownX - 1]))
-#	print("Right: " + str(update['tile_grid'][crownY][crownX + 1]))
-
-#	y, x = update['generals'][pi]
-#	print("x: " + str(x))
-#	print("y: " + str(y))
-	# move units from general to arbitrary square
-
+        moved = False
 
 	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-#		print("Army: "  + str(frank.mapGrid[stackY+dy][stackX + dx].army))
-#		print("dy, dx: " + str(dy) + ", " + str(dx))
-		if frank.mapGrid[stackY+dy][stackX + dx].army  <= -1:
+		if frank.mapGrid[stackY+dy][stackX + dx].army  >= 1:
 			frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
 			stackX += dx
 			stackY += dy
+			moved = True
 			break
-	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:		
-		if frank.mapGrid[stackY+dy][stackX+dx].army >= 1:
-			frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-			stackX += dx
-			stackY += dy
-			break                        
+
+	if moved == False:	
+        	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:		
+                	if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                        	frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+                                stackX += dx
+                                stackY += dy
+                                break                        
