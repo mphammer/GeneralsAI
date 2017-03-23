@@ -2,6 +2,11 @@ import generals
 import heapq
 
 
+import Queue as Q
+from math import *
+import datetime
+
+
 # 1v1
 #g = generals.Generals('ry0FVyx_g', 'frank', '1v1')
 
@@ -138,6 +143,99 @@ class Bot:
 						v.searchDist = alt
 						v.searchPrev = u
 		return target
+
+
+	def A_star(self,target):
+                '''A* tree search'''
+
+                # Make frontier set a priority queue
+                self.__frontier_set = Q.PriorityQueue()
+
+                # Find start and goal states
+                self.start = self.find_val(2)
+                self.__goal_state = target
+
+                # Add the start tile to the frontier set, using the distance between it and the goal state as it's priority
+                # This is calculated in our get_distance() fucntion using Manhattan distance
+                self.__frontier_set.put(self.start, self.get_distance(self.start, self.__goal_state))
+
+                # create dictionary to track distances traveled so far
+                cost_so_far = {}
+
+                # Add start state to explored set, using same dictionary method as befor
+                self.__explored_set = {(self.start[0], self.start[1]) : None}
+                # Add start state to cost so far, 0 distance from itself
+                cost_so_far = {(self.start[0], self.start[1]) : 0}
+
+                # While there's something in the frontier set
+                while not self.__frontier_set.empty():
+                    # Pop off the item with highest priority/lowest distance to goal state (heuristic value)
+                    curr = self.__frontier_set.get()
+                    # If this is the goal state, return path
+                    if self.__grid[curr[0]][curr[1]] == 3:
+                        return 
+                    # Otherwise, find the neighbors and add them to the frontier set with their distance to goal/priority
+                    else:
+                        neighbors = self.get_neighbors(curr[0], curr[1])
+                        for n in neighbors:
+                            # update the neightbors cost so far (1 more than previous position)
+                            cost_so_far[n] = cost_so_far[curr] + 1
+                            # find new heuristic for a neighbor
+                            new_heuristic = cost_so_far[n] + self.get_distance(n, self.__goal_state)
+                            # add the heuristic for the neighbor to the fontier set
+                            self.__frontier_set.put(n, self.get_distance(n, curr))
+                return "No Path Found"
+        
+
+        def get_neighbors(self,r,c):
+                ''' Returns a list of valid neighbors for a given node. Makes sure that the adjacent
+                    rows/columns are valid indices and that we don't already have the tile in our explored set.
+                    Adds valid neighbor tiles to the list of neighbors and also the explored set.'''
+
+                # When adding neighbors to the explored set, notice how we are setting the key to be the neighbor tile
+                # and the value as the tile we just came from. This will allow us to create the path in get_path() and
+                # which_direction() later on.
+
+                neighbors = []
+
+                # row below
+                if (r+1) < len(self.__grid):
+                    row_below = self.__grid[r+1][c]
+                    if (row_below in [1,3]) and (self.__explored_set.get((r+1,c)) == None):
+                        neighbors += [(r+1,c)]
+                        self.__explored_set[(r+1,c)] = (r,c)
+
+                # row above
+                if (r-1) >= 0:
+                    row_above = self.__grid[r-1][c]
+                    if (row_above in [1,3])and (self.__explored_set.get((r-1,c)) == None):
+                        neighbors += [(r-1,c)]
+                        self.__explored_set[(r-1,c)] = (r,c)
+
+                # column to the right
+                if (c+1) < len(self.__grid[0]):
+                    right_col = self.__grid[r][c+1]
+                    if (right_col in [1,3]) and (self.__explored_set.get((r,c+1)) == None) :
+                        neighbors += [(r,c+1)]
+                        self.__explored_set[(r,c+1)] = (r,c)
+
+                # coulumn to the left
+                if (c-1) >= 0:
+                    left_col = self.__grid[r][c-1]
+                    if (left_col in [1,3]) and (self.__explored_set.get((r,c-1)) == None):
+                        neighbors += [(r,c-1)]
+                        self.__explored_set[(r,c-1)] = (r,c)
+                return neighbors
+
+
+        def get_distance(self, prev, curr):
+                ''' gets manhattan distance between two nodes'''
+                return abs(prev[0] - curr[0]) + abs(prev[1] - curr[1])
+
+
+        def find_val(self,val):
+                '''returns the location of a value in the grid'''
+                return [(index, row.index(val)) for index, row in enumerate(self.__grid) if val in row][0] # http://stackoverflow.com/questions/17385419/find-indices-of-a-value-in-2d-matrix
 
 
 	def createMap(self, update):
