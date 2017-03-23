@@ -23,6 +23,8 @@ LEFT = (0, -1)
 UP = (-1, 0)
 DOWN = (1, 0)
 
+dirs = {(0, 1): "RIGHT", (0, -1): "LEFT", (-1, 0): "UP", (1, 0): "DOWN"}
+
 
 class Tile:
 	def __init__(self):
@@ -48,6 +50,9 @@ class Bot:
 		self.nRows = 0         # number of rows in the map
 		self.game = None
 		self.color = ""
+
+	def getSize(self):
+		return len(self.mapGrid)
 
 	def startGame(self,game="private"):
 		if game == "1v1":
@@ -175,6 +180,10 @@ class Bot:
 		print("")
 
 
+def checkInRange(size, x, y):
+	return x < size and y < size and y > -1 and x > -1
+
+
 
 frank = Bot()
 frank.startGame()
@@ -188,75 +197,81 @@ curDir = None
 
 for update in frank.game.get_updates():
 	frank.printMap()
-	if madeMap == False:
+	if madeMap == False: # only happens once at the start
 		frank.initializeMap(update)
 		pi = update['player_index']
 		crownY, crownX = update['generals'][pi]
-		
+
 		if frank.mapGrid[crownY][crownX].army > 0:
 			frank.color = "red"
 		else:
 			frank.color = "blue"
-		
+
 		stackX = crownX
 		stackY = crownY
 		madeMap = True
-		
+
 	frank.updateMap(update)
-	if frank.mapGrid[stackY][stackX].army > -1:
-		stackX = crownX
+	if frank.mapGrid[stackY][stackX].army > -1: # If the current spot has one or fewer troops,
+		stackX = crownX    # make the current stack the crown stack
 		stackY = crownY
 
 #	print("Stack: [" + str(stackX) + "," + str(stackY) + "]")
 
 	moved = False
 
-	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-		if frank.mapGrid[stackY+dy][stackX + dx].army  >= 1:
-			frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-			stackX += dx
-			stackY += dy
-			moved = True
-			break
+	for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]: # all directions
+		if checkInRange(frank.getSize(), stackY+dy, stackX+dx): # if the dir is valid
+                    print(frank.getSize())
+                    print(stackY+dy)
+                    print(stackX+dx)
+                    if frank.mapGrid[stackY+dy][stackX + dx].army  >= 1: # if there is an enemy troop next to stack
+                            frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+                            stackX += dx
+                            stackY += dy
+                            moved = True
+                            break
 
-	if moved == False:
-		if curDir != None:
-                        print(curDir)
-			dy, dx = curDir
-			if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
-				frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-				stackX += dx
-				stackY += dy
-				
-			else:
+	if moved == False: # if we did not find an enemy troop
+		if curDir != None: # if we have a current direction
+			dy, dx = curDir # store that dir
+			if checkInRange(frank.getSize(), stackY+dy, stackX+dx): # if the dir is valid   
+                            if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                                    frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+                                    stackX += dx
+                                    stackY += dy
+
+                        else:
                                 if curDir == UP or curDir == DOWN:
                                         dy, dx = LEFT
-                                        if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
-                                                print("HEADING LEFT")
-                                                curDir = LEFT
-                                        else:
-                                                print("HEADING RIGHT")
-                                                curDir = RIGHT
+                                        if checkInRange(frank.getSize(), stackY+dy, stackX+dx): # if the dir is valid
+                                            if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                                                    print("HEADING LEFT")
+                                                    curDir = LEFT
+                                            else:
+                                                    print("HEADING RIGHT")
+                                                    curDir = RIGHT
                                 else:
                                         dy, dx = UP
-                                        if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
-                                                print("HEADING UP")
-                                                curDir = UP
-                                        else:
-                                                print("HEADING DOWN")
-                                                curDir = DOWN
+                                        if checkInRange(frank.getSize(), stackY+dy, stackX+dx): # if the dir is valid
+                                            if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
+                                                    print("HEADING UP")
+                                                    curDir = UP
+                                            else:
+                                                    print("HEADING DOWN")
+                                                    curDir = DOWN
                                 dy, dx = curDir
                                 frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-				stackX += dx
-				stackY += dy
-				
-				
+                                stackX += dx
+                                stackY += dy
+
+
 		else:
-                        print("flipping")
-			for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:		
-				if frank.mapGrid[stackY+dy][stackX+dx].army <= -1:
-					frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
-					stackX += dx
-					stackY += dy
-					curDir = (dy, dx)
-					break                        
+			for dy, dx in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+				if checkInRange(frank.getSize(), stackY+dy, stackX+dx):
+					if frank.mapGrid[stackY+dy][stackX+dx].army <= -1: # if we have an existing path off the castle
+						frank.game.move(stackY, stackX, stackY + dy, stackX + dx)
+						stackX += dx
+						stackY += dy
+						curDir = (dy, dx)
+						break
